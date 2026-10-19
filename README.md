@@ -4,6 +4,10 @@ Aplikasi web untuk mengatur jadwal tim HR: **interview rekrutmen, training, acar
 
 Masalah yang diselesaikan: jadwal HR sering tabrakan. Satu interviewer dijadwalkan di dua interview pada jam yang sama, ruang rapat dipakai dua kegiatan, atau peserta training ternyata sedang cuti. Aplikasi ini menolak jadwal seperti itu sebelum tersimpan, dan menjelaskan alasannya.
 
+**Live demo: https://hr-schedule-hub.vercel.app** (klik salah satu akun contoh di halaman login, kata sandi `password123`)
+
+Catatan: demo berjalan di hosting gratis, jadi data bisa kembali ke data awal sewaktu-waktu. Itu normal.
+
 ![Cek bentrok saat menambah jadwal](docs/screenshots/04-cek-bentrok.png)
 
 ## Fitur
@@ -186,7 +190,7 @@ Kode status: `400` input tidak valid, `401` belum login, `403` tidak berwenang, 
 
 ## Deploy
 
-Aplikasi berjalan di platform Node.js apa pun (Render, Railway, Fly.io). Yang perlu diatur:
+Demo online berjalan di Vercel (lihat `vercel.json` dan `api/index.js`; database ada di memori sementara dan diisi ulang otomatis). Aplikasi juga bisa berjalan di platform Node.js lain (Render, Railway, Fly.io). Yang perlu diatur:
 
 1. Isi `JWT_SECRET` dengan string acak panjang. Server menolak start di produksi tanpa ini.
 2. Set `NODE_ENV=production` dan `TRUST_PROXY=true`.
