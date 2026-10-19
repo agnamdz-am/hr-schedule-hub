@@ -42,7 +42,10 @@ function authRoutes(db, { loginLimit = 10 } = {}) {
   // Daftar akun contoh untuk halaman login. Matikan dengan DEMO_MODE=false di deployment sungguhan.
   router.get('/demo', (req, res) => {
     if (process.env.DEMO_MODE === 'false') return res.json({ enabled: false, accounts: [] });
-    const accounts = db.prepare('SELECT name, email, role, division AS div, title FROM users ORDER BY id').all();
+    // Hanya beberapa akun yang mewakili tiap peran, supaya pengunjung tidak bingung memilih.
+    const accounts = db
+      .prepare("SELECT name, email, role, division AS div, title FROM users WHERE id IN (1, 17, 4, 5) ORDER BY CASE role WHEN 'hr_manager' THEN 0 WHEN 'admin' THEN 1 WHEN 'manager' THEN 2 ELSE 3 END, id")
+      .all();
     res.json({ enabled: true, password: DEMO_PASSWORD, accounts });
   });
 

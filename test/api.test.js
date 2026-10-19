@@ -17,7 +17,7 @@ test('endpoint data menolak permintaan tanpa login', async () => {
 test('login gagal dengan password salah', async () => {
   const r = await fetch(`${app.base}/api/auth/login`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'rina@gnaascend.test', password: 'salah' }),
+    body: JSON.stringify({ email: 'indah@gnaascend.test', password: 'salah' }),
   });
   assert.equal(r.status, 401);
 });
@@ -25,15 +25,15 @@ test('login gagal dengan password salah', async () => {
 test('login berhasil memberi cookie httpOnly dan data awal', async () => {
   const res = await fetch(`${app.base}/api/auth/login`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: 'rina@gnaascend.test', password: 'password123' }),
+    body: JSON.stringify({ email: 'indah@gnaascend.test', password: 'password123' }),
   });
   assert.equal(res.status, 200);
   assert.match(res.headers.getSetCookie()[0], /HttpOnly/i);
-  const call = await loginAs(app.base, 'rina@gnaascend.test');
+  const call = await loginAs(app.base, 'indah@gnaascend.test');
   const { status, data } = await call('GET', '/api/bootstrap');
   assert.equal(status, 200);
   assert.equal(data.me.role, 'admin');
-  assert.equal(data.people.length, 16);
+  assert.equal(data.people.length, 17);
   assert.equal(data.rooms.length, 6);
   assert.ok(data.events.length >= 18);
   assert.equal(data.me.password_hash, undefined);
@@ -48,7 +48,7 @@ test('karyawan biasa tidak boleh membuat jadwal', async () => {
 });
 
 test('admin ditolak saat menjadwalkan orang yang sudah punya jadwal, dan tidak ada data yang tersimpan', async () => {
-  const call = await loginAs(app.base, 'rina@gnaascend.test');
+  const call = await loginAs(app.base, 'indah@gnaascend.test');
   const before = countEvents();
   const r = await call('POST', '/api/events', ev({ start: '10:30', end: '11:30', room: 'bromo' }));
   assert.equal(r.status, 409);
@@ -57,7 +57,7 @@ test('admin ditolak saat menjadwalkan orang yang sudah punya jadwal, dan tidak a
 });
 
 test('admin bisa membuat, mengubah, dan menghapus jadwal yang tidak bentrok', async () => {
-  const call = await loginAs(app.base, 'rina@gnaascend.test');
+  const call = await loginAs(app.base, 'indah@gnaascend.test');
   const created = await call('POST', '/api/events', ev());
   assert.equal(created.status, 201);
   const id = created.data.event.id;
@@ -73,7 +73,7 @@ test('admin bisa membuat, mengubah, dan menghapus jadwal yang tidak bentrok', as
 });
 
 test('input jadwal yang tidak valid ditolak dengan 400', async () => {
-  const call = await loginAs(app.base, 'rina@gnaascend.test');
+  const call = await loginAs(app.base, 'indah@gnaascend.test');
   assert.equal((await call('POST', '/api/events', ev({ date: '2026-02-31' }))).status, 400);
   assert.equal((await call('POST', '/api/events', ev({ start: '25:00' }))).status, 400);
   assert.equal((await call('POST', '/api/events', ev({ room: 'tidak-ada' }))).status, 400);
@@ -143,4 +143,23 @@ test('logout memerintahkan browser menghapus cookie sesi', async () => {
   const out = await fetch(`${app.base}/api/auth/logout`, { method: 'POST' });
   assert.equal(out.status, 200);
   assert.match(out.headers.getSetCookie().join(';'), /hr_token=;/);
+});
+
+test('Manager HR hanya menyetujui: tidak boleh mengubah jadwal, tetapi boleh menyetujui cuti', async () => {
+  const agna = await loginAs(app.base, 'agna@gnaascend.test');
+  const before = countEvents();
+  assert.equal((await agna('POST', '/api/events', ev())).status, 403);
+  assert.equal(countEvents(), before);
+
+  const target = app.ctx().leaves.find((l) => l.status === 'pending' && l.userId !== 1);
+  const ok = await agna('POST', `/api/leaves/${target.id}/approve`);
+  assert.equal(ok.status, 200);
+  assert.equal(ok.data.leave.by, 1);
+});
+
+test('Admin HR mengelola jadwal tetapi tidak menyetujui cuti staf', async () => {
+  const indah = await loginAs(app.base, 'indah@gnaascend.test');
+  const pending = app.ctx().leaves.find((l) => l.status === 'pending' && l.userId !== 17);
+  assert.equal((await indah('POST', `/api/leaves/${pending.id}/approve`)).status, 403);
+  assert.equal((await indah('POST', '/api/events', ev())).status, 201);
 });

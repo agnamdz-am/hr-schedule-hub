@@ -16,5 +16,5 @@ if (db.prepare('SELECT COUNT(*) AS n FROM users').get().n === 0) {
 
 createApp(db).listen(port, () => {
   console.log(`HR Schedule Hub berjalan di http://localhost:${port}`);
-  console.log('Login demo: rina@gnaascend.test / password123');
+  console.log('Login demo: indah@gnaascend.test / password123');
 });

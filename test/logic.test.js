@@ -98,7 +98,8 @@ test('siapa yang boleh menyetujui cuti', () => {
   const pending = ctx.leaves.find((l) => l.userId === 11 && l.status === 'pending'); // Salsa, Marketing
   const by = (id) => ctx.people.find((p) => p.id === id);
   assert.equal(L.canApprove(by(10), pending, ctx), true); // manager Marketing
-  assert.equal(L.canApprove(by(1), pending, ctx), true); // admin HR
+  assert.equal(L.canApprove(by(1), pending, ctx), true); // Manager HR
+  assert.equal(L.canApprove(by(17), pending, ctx), false); // Admin HR hanya mengelola jadwal
   assert.equal(L.canApprove(by(4), pending, ctx), false); // manager divisi lain
   assert.equal(L.canApprove(by(11), pending, ctx), false); // diri sendiri
   assert.equal(L.canApprove(by(8), pending, ctx), false); // karyawan biasa

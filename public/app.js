@@ -41,7 +41,8 @@ const TYPE_LABEL = { interview: 'Interview', training: 'Training', company: 'Aca
 const LEAVE_LABEL = { tahunan: 'Cuti tahunan', sakit: 'Sakit', izin: 'Izin' };
 const STATUS_LABEL = { pending: 'Menunggu', approved: 'Disetujui', rejected: 'Ditolak' };
 const DIVS = ['HR', 'IT', 'Finance', 'Marketing', 'Operations'];
-const ROLE_LABEL = (p) => (p.role === 'admin' ? 'Admin HR' : p.role === 'manager' ? `Manager ${p.div}` : `Karyawan ${p.div}`);
+const ROLE_HINT = { hr_manager: 'Hanya menyetujui cuti (tidak mengubah jadwal)', admin: 'Kelola semua jadwal', manager: 'Setujui cuti anggota divisinya', staff: 'Lihat jadwal, ajukan cuti sendiri' };
+const ROLE_LABEL = (p) => (p.role === 'hr_manager' ? 'Manager HR' : p.role === 'admin' ? 'Admin HR' : p.role === 'manager' ? `Manager ${p.div}` : `Karyawan ${p.div}`);
 
 /* ---------- Helper ---------- */
 const $ = (s) => document.querySelector(s);
@@ -102,7 +103,7 @@ function leaveRow(l, withActions) {
   if (withActions && l.status === 'pending') {
     acts = canApprove(l)
       ? `<div class="acts"><button class="btn sm ok" data-action="approve" data-id="${l.id}">Setujui</button><button class="btn sm bad" data-action="reject" data-id="${l.id}">Tolak</button></div>`
-      : `<span class="muted" style="font-size:12.5px">Menunggu ${p.div === 'HR' ? 'Admin HR' : 'manager ' + esc(p.div)}</span>`;
+      : `<span class="muted" style="font-size:12.5px">Menunggu ${p.role === 'staff' && p.div !== 'HR' ? 'manager ' + esc(p.div) : 'Manager HR'}</span>`;
   }
   const by = l.by ? ` · oleh ${esc(first(pname(ctx(), l.by)))}` : '';
   return `<div class="lrow"><div class="top2"><span><b>${esc(p.name)}</b> <span class="muted">· ${esc(p.div)}</span></span><span class="pill ${l.status}">${STATUS_LABEL[l.status]}</span></div>
@@ -132,9 +133,9 @@ V.dashboard = () => {
   const hint = S.demo && S.demo.enabled ? `
   <section class="hint"><b>Coba di demo ini</b>
     <ol>
-      <li>Masuk sebagai <b>Rina Maharani (Admin HR)</b>, buka Kalender, lalu tambah interview pukul 10:30 dengan Bagas Wicaksono pada hari Selasa. Server menolak karena Bagas sudah ada interview.</li>
+      <li>Masuk sebagai <b>Indah Permatasari (Admin HR)</b>, buka Kalender, lalu tambah interview pukul 10:30 dengan Bagas Wicaksono pada hari Selasa. Server menolak karena Bagas sudah ada interview.</li>
       <li>Masuk sebagai <b>Salsa Nuraini</b> dan ajukan cuti tahunan 15 hari kerja. Pengajuan ditolak karena sisa cuti tidak cukup.</li>
-      <li>Masuk sebagai <b>Indra Setiawan (Manager Marketing)</b> dan setujui cuti Salsa. Setelah itu coba ajukan cuti lain dari divisi Marketing pada tanggal yang sama.</li>
+      <li>Masuk sebagai <b>Indra Setiawan (Manager Marketing)</b> atau <b>Agna Mudzkia (Manager HR)</b> dan setujui cuti Salsa. Setelah itu coba ajukan cuti lain dari divisi Marketing pada tanggal yang sama.</li>
     </ol>
   </section>` : '';
   return `
@@ -184,7 +185,7 @@ V.calendar = () => {
   const filters = ['interview', 'training', 'company', 'leave'].map((k) => `<button class="fchip t-${k}" data-action="filter" data-key="${k}" aria-pressed="${S.filters[k]}"><i></i>${TYPE_LABEL[k]}</button>`).join('');
   return `
   <div class="row"><div><h1>Kalender</h1><p class="lead">Semua interview, training, acara perusahaan, dan cuti yang sudah disetujui.</p></div>
-    ${isAdmin() ? '<button class="btn primary" data-action="new">+ Tambah jadwal</button>' : '<span class="muted" style="font-size:13px">Hanya Admin HR yang dapat menambah jadwal.</span>'}</div>
+    ${isAdmin() ? '<button class="btn primary" data-action="new">+ Tambah jadwal</button>' : '<span class="muted" style="font-size:13px">Hanya Admin HR yang dapat mengubah jadwal.</span>'}</div>
   <div class="chips">${filters}</div>
   <div class="grid2 cal-layout">
     <section class="panel">
@@ -383,7 +384,7 @@ async function loadDemoAccounts() {
   box.hidden = !S.demo.enabled;
   if (!S.demo.enabled) return;
   $('#demo-pass').textContent = S.demo.password;
-  $('#demo-list').innerHTML = S.demo.accounts.map((a) => `<button type="button" class="demo-btn" data-action="demo" data-email="${esc(a.email)}"><span>${esc(a.name)}</span><small>${esc(ROLE_LABEL({ role: a.role, div: a.div }))}</small></button>`).join('');
+  $('#demo-list').innerHTML = S.demo.accounts.map((a) => `<button type="button" class="demo-btn" data-action="demo" data-email="${esc(a.email)}"><span><b>${esc(ROLE_LABEL({ role: a.role, div: a.div }))}</b><br><small>${esc(ROLE_HINT[a.role] || '')}</small></span><small>${esc(a.name)}</small></button>`).join('');
 }
 function showLogin(msg) {
   closeModal();

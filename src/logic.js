@@ -157,14 +157,19 @@
   }
 
   /**
-   * Siapa yang boleh memutuskan cuti: admin HR untuk semua orang, manager untuk
-   * staf di divisinya. Tidak ada yang boleh menyetujui cuti dirinya sendiri.
+   * Siapa yang boleh memutuskan cuti:
+   * - Manager HR: semua orang.
+   * - Manager divisi: staf di divisinya.
+   * - Admin HR (yang mengelola jadwal) tidak menyetujui cuti, kecuali cuti Manager HR sendiri.
+   * Tidak ada yang boleh menyetujui cuti dirinya sendiri.
    */
   function canApprove(actor, leave, ctx) {
     if (!actor || actor.id === leave.userId) return false;
-    if (actor.role === 'admin') return true;
+    if (actor.role === 'hr_manager') return true;
     const owner = person(ctx, leave.userId);
-    return actor.role === 'manager' && !!owner && owner.div === actor.div && owner.role === 'staff';
+    if (!owner) return false;
+    if (actor.role === 'admin') return owner.role === 'hr_manager';
+    return actor.role === 'manager' && owner.div === actor.div && owner.role === 'staff';
   }
 
   return {

@@ -12,13 +12,14 @@ const { addDays, ymd } = require('./logic');
 const DEMO_PASSWORD = 'password123';
 
 const PEOPLE = [
-  [1, 'Rina Maharani', 'HR', 'HR Manager', 'admin', 3],
+  [1, 'Agna Mudzkia', 'HR', 'HR Manager', 'hr_manager', 3],
   [2, 'Dimas Pratama', 'HR', 'Recruiter', 'admin', 2],
   [3, 'Ayu Lestari', 'HR', 'Training & Development Officer', 'admin', 1],
   [4, 'Bagas Wicaksono', 'IT', 'IT Lead', 'manager', 4],
   [5, 'Nanda Prakoso', 'IT', 'Frontend Developer', 'staff', 2],
   [6, 'Putri Anjani', 'IT', 'Backend Developer', 'staff', 5],
   [16, 'Citra Dewanti', 'IT', 'UI/UX Designer', 'staff', 0],
+  [17, 'Indah Permatasari', 'HR', 'Assistant HR Manager', 'admin', 2],
   [7, 'Hendra Gunawan', 'Finance', 'Finance Manager', 'manager', 6],
   [8, 'Fajar Kurniawan', 'Finance', 'Accountant', 'staff', 3],
   [9, 'Maya Safitri', 'Finance', 'Tax Staff', 'staff', 1],
@@ -104,5 +105,5 @@ if (require.main === module) {
   const db = openDb(file);
   seed(db);
   console.log(`Database diisi ulang: ${file}`);
-  console.log(`Login demo: rina@gnaascend.test / ${DEMO_PASSWORD}`);
+  console.log(`Login demo: indah@gnaascend.test / ${DEMO_PASSWORD}`);
 }

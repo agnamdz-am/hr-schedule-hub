@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT    NOT NULL,
   division      TEXT    NOT NULL,
   title         TEXT    NOT NULL,
-  role          TEXT    NOT NULL CHECK (role IN ('admin', 'manager', 'staff')),
+  role          TEXT    NOT NULL CHECK (role IN ('hr_manager', 'admin', 'manager', 'staff')),
   quota         INTEGER NOT NULL DEFAULT 12 CHECK (quota >= 0),  -- jatah cuti tahunan
   used_before   INTEGER NOT NULL DEFAULT 0  CHECK (used_before >= 0) -- cuti yang sudah terpakai sebelum sistem ini
 );

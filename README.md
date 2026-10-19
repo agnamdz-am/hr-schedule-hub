@@ -12,7 +12,7 @@ Catatan: demo berjalan di hosting gratis, jadi data bisa kembali ke data awal se
 
 ## Fitur
 
-- **Login dengan tiga peran**: Admin HR, Manager, dan Karyawan, masing-masing dengan hak akses berbeda.
+- **Login dengan empat peran** dan pemisahan tugas: Admin HR membuat dan mengubah jadwal, Manager HR hanya menyetujui cuti, Manager divisi menyetujui cuti timnya, dan Karyawan mengajukan cuti sendiri.
 - **Kalender bulanan** dengan filter jenis kegiatan, plus daftar jadwal yang bisa dicari dan disaring.
 - **Deteksi bentrok** untuk interviewer/peserta, ruangan, kapasitas ruangan, dan peserta yang sedang cuti.
 - **Cuti dengan alur persetujuan**: pengajuan, setuju/tolak oleh atasan, sisa kuota tahunan, dan aturan satu orang per divisi yang boleh cuti bersamaan.
@@ -53,7 +53,8 @@ Semua akun memakai kata sandi `password123`. Di halaman login ada daftar akun ya
 
 | Email | Peran |
 |---|---|
-| `rina@gnaascend.test` | Admin HR (HR Manager) |
+| `agna@gnaascend.test` | Manager HR (hanya menyetujui cuti, tidak mengubah jadwal) |
+| `indah@gnaascend.test` | Admin HR (Assistant HR Manager, mengelola jadwal) |
 | `dimas@gnaascend.test` | Admin HR (Recruiter) |
 | `bagas@gnaascend.test` | Manager IT |
 | `indra@gnaascend.test` | Manager Marketing |
@@ -64,9 +65,9 @@ Email lain mengikuti pola `namadepan@gnaascend.test`.
 
 ### Skenario yang bisa dicoba
 
-1. Masuk sebagai **Rina**, buka Kalender, lalu tambah interview Selasa pukul 10:30 dengan Bagas. Ditolak karena Bagas sudah ada interview 10:00 sampai 11:00.
+1. Masuk sebagai **Indah**, buka Kalender, lalu tambah interview Selasa pukul 10:30 dengan Bagas. Ditolak karena Bagas sudah ada interview 10:00 sampai 11:00.
 2. Masuk sebagai **Salsa** dan ajukan cuti tahunan 15 hari kerja. Ditolak karena sisa kuota tidak cukup.
-3. Masuk sebagai **Indra** dan setujui cuti Salsa. Setelah itu persetujuan cuti lain dari Marketing di tanggal yang sama akan ditolak.
+3. Masuk sebagai **Indra** (atau **Agna**) dan setujui cuti Salsa. Setelah itu persetujuan cuti lain dari Marketing di tanggal yang sama akan ditolak.
 
 ### Perintah lain
 
@@ -111,7 +112,7 @@ erDiagram
     text email UK
     text password_hash
     text division
-    text role "admin | manager | staff"
+    text role "hr_manager | admin | manager | staff"
     int quota "jatah cuti tahunan"
     int used_before
   }
@@ -162,8 +163,8 @@ Semua endpoint selain login butuh cookie sesi. Respons error berbentuk `{ "error
 | DELETE | `/api/events/:id` | Admin HR | Menghapus jadwal |
 | GET | `/api/leaves` | login | Daftar pengajuan cuti |
 | POST | `/api/leaves` | login | Mengajukan cuti untuk diri sendiri |
-| POST | `/api/leaves/:id/approve` | Admin HR, atau Manager divisi yang sama | Menyetujui |
-| POST | `/api/leaves/:id/reject` | Admin HR, atau Manager divisi yang sama | Menolak, dengan `note` opsional |
+| POST | `/api/leaves/:id/approve` | Manager HR, atau Manager divisi yang sama | Menyetujui |
+| POST | `/api/leaves/:id/reject` | Manager HR, atau Manager divisi yang sama | Menolak, dengan `note` opsional |
 
 Kode status: `400` input tidak valid, `401` belum login, `403` tidak berwenang, `404` tidak ditemukan, `409` bentrok atau melanggar aturan (isi `conflicts` atau `errors` menjelaskan alasannya).
 
@@ -183,7 +184,7 @@ Kode status: `400` input tidak valid, `401` belum login, `403` tidak berwenang, 
 
 ## Tes
 
-`npm test` menjalankan 29 tes:
+`npm test` menjalankan 31 tes:
 
 - **Unit** (`test/logic.test.js`): tabrakan orang, ruangan, kapasitas, jadwal berurutan yang tidak dianggap bentrok, hitungan hari kerja, kuota cuti, aturan satu divisi, dan siapa yang boleh menyetujui.
 - **API** (`test/api.test.js`): server sungguhan dengan database di memori. Mencakup login, hak akses per peran, penolakan bentrok tanpa menyimpan apa pun, validasi input, dan seluruh alur persetujuan cuti.

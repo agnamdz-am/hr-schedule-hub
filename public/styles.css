@@ -180,9 +180,9 @@ td .ttl{font-weight:600}
 .loginwrap{min-height:80vh;display:grid;place-items:center;padding-block:32px}
 .logincard{width:100%;max-width:460px;display:flex;flex-direction:column;gap:16px;padding:24px}
 .logincard .form{grid-template-columns:minmax(0,1fr)}
-.demo-list{display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto}
+.demo-list{display:flex;flex-direction:column;gap:6px;max-height:none}
 .demo-btn{display:flex;justify-content:space-between;gap:10px;align-items:center;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13.5px}
 .demo-btn:hover{background:var(--surface2)}
-.demo-btn small{color:var(--muted);white-space:nowrap}
+.demo-btn small{color:var(--muted)}
 .who .name{font-weight:600;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 code.mono{background:var(--surface2);padding:1px 6px;border-radius:4px}
