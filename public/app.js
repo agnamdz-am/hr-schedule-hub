@@ -41,7 +41,7 @@ const TYPE_LABEL = { interview: 'Interview', training: 'Training', company: 'Aca
 const LEAVE_LABEL = { tahunan: 'Cuti tahunan', sakit: 'Sakit', izin: 'Izin' };
 const STATUS_LABEL = { pending: 'Menunggu', approved: 'Disetujui', rejected: 'Ditolak' };
 const DIVS = ['HR', 'IT', 'Finance', 'Marketing', 'Operations'];
-const ROLE_HINT = { hr_manager: 'Hanya menyetujui cuti (tidak mengubah jadwal)', admin: 'Kelola semua jadwal', manager: 'Setujui cuti anggota divisinya', staff: 'Lihat jadwal, ajukan cuti sendiri' };
+const ROLE_HINT = { hr_manager: 'Hanya menyetujui cuti', admin: 'Kelola semua jadwal', manager: 'Setujui cuti anggota divisinya', staff: 'Lihat jadwal, ajukan cuti sendiri' };
 const ROLE_LABEL = (p) => (p.role === 'hr_manager' ? 'Manager HR' : p.role === 'admin' ? 'Admin HR' : p.role === 'manager' ? `Manager ${p.div}` : `Karyawan ${p.div}`);
 
 /* ---------- Helper ---------- */
