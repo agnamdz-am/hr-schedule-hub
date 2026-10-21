@@ -7,6 +7,8 @@ const { loadCtx } = require('./db');
 const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const leaveRoutes = require('./routes/leaves');
+const recruitRoutes = require('./routes/recruit');
+const employeeRoutes = require('./routes/employees');
 
 function createApp(db, opts = {}) {
   assertConfigured();
@@ -45,11 +47,14 @@ function createApp(db, opts = {}) {
     res.json({ me: req.user, ...ctx });
   });
   app.use('/api/events', auth, eventRoutes(db));
+  app.use('/api/employees', auth, employeeRoutes(db));
   app.use('/api/leaves', auth, leaveRoutes(db));
+  app.use('/api/recruit', auth, recruitRoutes(db));
   app.use('/api', (req, res) => res.status(404).json({ error: 'Endpoint tidak ditemukan.' }));
 
   // logic.js dipakai bersama oleh server dan browser.
   app.get('/logic.js', (req, res) => res.type('application/javascript').sendFile(path.join(__dirname, 'logic.js')));
+  app.get('/recruit.js', (req, res) => res.type('application/javascript').sendFile(path.join(__dirname, 'recruit.js')));
   app.use(express.static(path.join(__dirname, '..', 'public')));
 
   // eslint-disable-next-line no-unused-vars

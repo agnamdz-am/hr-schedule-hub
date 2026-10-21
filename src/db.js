@@ -5,12 +5,28 @@ const { DatabaseSync } = require('node:sqlite');
 
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 
-/** Membuka database (file atau ':memory:') dan memastikan semua tabel ada. */
+// Naikkan angka ini setiap kali struktur tabel berubah.
+const SCHEMA_VERSION = 2;
+
+/**
+ * Membuka database (file atau ':memory:') dan memastikan semua tabel ada.
+ * Aplikasi ini berisi data fiktif untuk demo, jadi bila struktur tabel di file lama
+ * berbeda (versi lebih rendah), tabel lama dihapus dan dibuat ulang. Data demo akan diisi ulang
+ * otomatis oleh server saat tabel pengguna kosong.
+ */
 function openDb(file) {
   if (file !== ':memory:') fs.mkdirSync(path.dirname(file), { recursive: true });
   const db = new DatabaseSync(file);
-  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  db.exec('PRAGMA journal_mode = WAL;');
+  const version = db.prepare('PRAGMA user_version').get().user_version;
+  if (version < SCHEMA_VERSION) {
+    db.exec('PRAGMA foreign_keys = OFF;');
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'").all();
+    for (const t of tables) db.exec(`DROP TABLE IF EXISTS "${t.name}"`);
+  }
+  db.exec('PRAGMA foreign_keys = ON;');
   db.exec(schema);
+  db.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   return db;
 }
 
@@ -30,10 +46,15 @@ function inTransaction(db, fn) {
   }
 }
 
+/** Karyawan beserta peran akunnya (role = null bila tidak punya akun login). */
 function getPeople(db) {
   return db
-    .prepare('SELECT id, name, division AS div, title, role, quota, used_before AS usedBefore FROM users ORDER BY id')
-    .all();
+    .prepare(
+      `SELECT e.id, e.name, e.division AS div, e.title, u.role AS role, e.quota, e.used_before AS usedBefore, e.active
+         FROM employees e LEFT JOIN users u ON u.id = e.id ORDER BY e.id`
+    )
+    .all()
+    .map((p) => ({ ...p, active: p.active === 1 }));
 }
 
 function getRooms(db) {
@@ -43,15 +64,15 @@ function getRooms(db) {
 function getEvents(db) {
   const rows = db
     .prepare(
-      `SELECT id, type, title, candidate, event_date AS date, start_time AS start, end_time AS end,
-              room_id AS room, all_hands AS allHands
+      `SELECT id, type, title, candidate, candidate_id AS candidateId, owner_id AS ownerId, attendees,
+              event_date AS date, start_time AS start, end_time AS end, room_id AS room, all_hands AS allHands
          FROM events ORDER BY event_date, start_time, id`
     )
     .all();
   const byEvent = new Map();
-  for (const { event_id, user_id } of db.prepare('SELECT event_id, user_id FROM event_participants ORDER BY user_id').all()) {
+  for (const { event_id, employee_id } of db.prepare('SELECT event_id, employee_id FROM event_participants ORDER BY employee_id').all()) {
     if (!byEvent.has(event_id)) byEvent.set(event_id, []);
-    byEvent.get(event_id).push(user_id);
+    byEvent.get(event_id).push(employee_id);
   }
   return rows.map((r) => ({ ...r, allHands: r.allHands === 1, people: byEvent.get(r.id) || [] }));
 }
@@ -59,8 +80,8 @@ function getEvents(db) {
 function getLeaves(db) {
   return db
     .prepare(
-      `SELECT id, user_id AS userId, type, start_date AS start, end_date AS end, reason, status,
-              decided_by AS by, note
+      `SELECT id, employee_id AS employeeId, type, start_date AS start, end_date AS end, reason, status,
+              decided_by AS by, note, submitted_by AS submittedBy
          FROM leaves ORDER BY start_date, id`
     )
     .all();
@@ -73,31 +94,32 @@ function loadCtx(db) {
 
 function setParticipants(db, eventId, people) {
   db.prepare('DELETE FROM event_participants WHERE event_id = ?').run(eventId);
-  const ins = db.prepare('INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)');
-  for (const uid of people) ins.run(eventId, uid);
+  const ins = db.prepare('INSERT INTO event_participants (event_id, employee_id) VALUES (?, ?)');
+  for (const id of people) ins.run(eventId, id);
 }
 
-/** Menyimpan jadwal beserta pesertanya dalam satu transaksi. Mengembalikan id baru. */
+/** Menyimpan jadwal beserta orang yang dicek bentrok dalam satu transaksi. Mengembalikan id baru. */
 const insertEvent = (db, e, createdBy) =>
   inTransaction(db, () => {
     const info = db
       .prepare(
-        `INSERT INTO events (type, title, candidate, event_date, start_time, end_time, room_id, all_hands, created_by)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO events (type, title, candidate, candidate_id, owner_id, attendees, event_date, start_time, end_time,
+                             room_id, all_hands, created_by)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(e.type, e.title, e.candidate || '', e.date, e.start, e.end, e.room, e.allHands ? 1 : 0, createdBy);
+      .run(e.type, e.title, e.candidate || '', e.candidateId || null, e.ownerId || null, e.attendees, e.date, e.start, e.end, e.room, e.allHands ? 1 : 0, createdBy);
     const id = Number(info.lastInsertRowid);
-    if (!e.allHands) setParticipants(db, id, e.people);
+    setParticipants(db, id, e.people);
     return id;
   });
 
 const updateEvent = (db, id, e) =>
   inTransaction(db, () => {
     db.prepare(
-      `UPDATE events SET type = ?, title = ?, candidate = ?, event_date = ?, start_time = ?, end_time = ?,
-                         room_id = ?, all_hands = ? WHERE id = ?`
-    ).run(e.type, e.title, e.candidate || '', e.date, e.start, e.end, e.room, e.allHands ? 1 : 0, id);
-    setParticipants(db, id, e.allHands ? [] : e.people);
+      `UPDATE events SET type = ?, title = ?, candidate = ?, candidate_id = ?, owner_id = ?, attendees = ?, event_date = ?,
+                         start_time = ?, end_time = ?, room_id = ?, all_hands = ? WHERE id = ?`
+    ).run(e.type, e.title, e.candidate || '', e.candidateId || null, e.ownerId || null, e.attendees, e.date, e.start, e.end, e.room, e.allHands ? 1 : 0, id);
+    setParticipants(db, id, e.people);
   });
 
 module.exports = { openDb, inTransaction, loadCtx, getPeople, getRooms, getEvents, getLeaves, insertEvent, updateEvent };

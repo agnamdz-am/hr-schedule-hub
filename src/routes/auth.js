@@ -18,7 +18,7 @@ function authRoutes(db, { loginLimit = 10 } = {}) {
     message: { error: 'Terlalu banyak percobaan login. Coba lagi beberapa menit lagi.' },
   });
   const byEmail = db.prepare('SELECT id, password_hash FROM users WHERE email = ?');
-  const publicUser = db.prepare('SELECT id, name, email, division AS div, title, role, quota, used_before AS usedBefore FROM users WHERE id = ?');
+  const publicUser = db.prepare('SELECT u.id, e.name, u.email, e.division AS div, e.title, u.role, e.quota, e.used_before AS usedBefore FROM users u JOIN employees e ON e.id = u.id WHERE u.id = ?');
 
   router.post('/login', limiter, (req, res) => {
     const { email, password } = req.body || {};
@@ -42,9 +42,9 @@ function authRoutes(db, { loginLimit = 10 } = {}) {
   // Daftar akun contoh untuk halaman login. Matikan dengan DEMO_MODE=false di deployment sungguhan.
   router.get('/demo', (req, res) => {
     if (process.env.DEMO_MODE === 'false') return res.json({ enabled: false, accounts: [] });
-    // Hanya beberapa akun yang mewakili tiap peran, supaya pengunjung tidak bingung memilih.
+    // Hanya dua akun: Manager HR dan Admin HR.
     const accounts = db
-      .prepare("SELECT name, email, role, division AS div, title FROM users WHERE id IN (1, 17, 4, 5) ORDER BY CASE role WHEN 'hr_manager' THEN 0 WHEN 'admin' THEN 1 WHEN 'manager' THEN 2 ELSE 3 END, id")
+      .prepare("SELECT e.name, u.email, u.role, e.division AS div, e.title FROM users u JOIN employees e ON e.id = u.id WHERE u.id IN (1, 17) ORDER BY CASE u.role WHEN 'hr_manager' THEN 0 ELSE 1 END, u.id")
       .all();
     res.json({ enabled: true, password: DEMO_PASSWORD, accounts });
   });

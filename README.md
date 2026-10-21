@@ -1,6 +1,6 @@
 # HR Schedule Hub
 
-Aplikasi web untuk mengatur jadwal tim HR: **interview rekrutmen, training, acara perusahaan, dan cuti karyawan** dalam satu kalender. Dibuat sebagai proyek portofolio dengan Node.js, memakai data fiktif **PT Gna Ascend Indonesia**.
+Aplikasi web untuk mengatur jadwal tim HR: **interview rekrutmen, training, acara perusahaan, dan cuti karyawan** dalam satu menu Jadwal (tampilan kalender dan daftar). Dibuat sebagai proyek portofolio dengan Node.js, memakai data fiktif **PT Gna Ascend Indonesia**.
 
 Masalah yang diselesaikan: jadwal HR sering tabrakan. Satu interviewer dijadwalkan di dua interview pada jam yang sama, ruang rapat dipakai dua kegiatan, atau peserta training ternyata sedang cuti. Aplikasi ini menolak jadwal seperti itu sebelum tersimpan, dan menjelaskan alasannya.
 
@@ -12,10 +12,12 @@ Catatan: demo berjalan di hosting gratis, jadi data bisa kembali ke data awal se
 
 ## Fitur
 
-- **Login dengan empat peran** dan pemisahan tugas: Admin HR membuat dan mengubah jadwal, Manager HR hanya menyetujui cuti, Manager divisi menyetujui cuti timnya, dan Karyawan mengajukan cuti sendiri.
-- **Kalender bulanan** dengan filter jenis kegiatan, plus daftar jadwal yang bisa dicari dan disaring.
-- **Deteksi bentrok** untuk interviewer/peserta, ruangan, kapasitas ruangan, dan peserta yang sedang cuti.
-- **Cuti dengan alur persetujuan**: pengajuan, setuju/tolak oleh atasan, sisa kuota tahunan, dan aturan satu orang per divisi yang boleh cuti bersamaan.
+- **Dua akun login saja, Admin HR dan Manager HR**, dengan pemisahan tugas. Admin HR bekerja sehari-hari (jadwal, mengajukan cuti, rekrutmen, data karyawan). Manager HR memutuskan: semua persetujuan cuti dan penawaran kerja. Karyawan lain tidak butuh akun, cukup tercatat di data karyawan.
+- **Data karyawan satu tempat** (menu Karyawan: tambah, ubah, nonaktifkan). Semua form memilih nama dari daftar ini, dan nama, jabatan, divisi, serta sisa cuti terisi otomatis. Karyawan yang dinonaktifkan hilang dari pilihan form, tetapi riwayatnya tetap ada.
+- **Jadwal**: satu menu dengan dua tampilan (Kalender dan Daftar). Form acara/training cukup penanggung jawab, jumlah peserta, ruang, dan waktu. Form interview memilih kandidat dari menu Rekrutmen dan pewawancara dari daftar karyawan.
+- **Deteksi bentrok** untuk pewawancara/penanggung jawab, ruangan, kapasitas ruangan (dihitung dari jumlah peserta), dan yang sedang cuti.
+- **Cuti dengan alur persetujuan**: Admin HR memilih karyawan dari daftar dan mengajukan, Manager HR menyetujui. Ada sisa kuota tahunan dan aturan satu orang per divisi yang boleh cuti bersamaan. Tidak ada yang bisa menyetujui cutinya sendiri; cuti Manager HR diproses Admin HR supaya tidak buntu.
+- **Rekrutmen**: lowongan, papan kandidat dari Dilamar sampai Diterima, dan penilaian interview. Admin HR mengisi penilaian atas nama pewawancara yang tercatat di jadwal interview kandidat itu (tercatat siapa yang menginput). Aturan tahapan dijaga server: tahap tidak bisa dilompati, ke Interview User butuh penilaian HR yang merekomendasikan lanjut, ke Penawaran butuh penilaian Interview User dengan rata-rata skor minimal 3, penawaran hanya diputuskan Manager HR, kuota lowongan otomatis menutup, dan menolak wajib beralasan.
 - **Dashboard**: interview minggu ini, training mendatang, siapa yang cuti hari ini, pengajuan yang menunggu, dan pemakaian ruangan.
 - Tampilan responsif (HP sampai desktop) dan mendukung mode gelap.
 
@@ -49,25 +51,22 @@ Konfigurasi opsional lewat file `.env` (contoh ada di `.env.example`).
 
 ### Akun demo
 
-Semua akun memakai kata sandi `password123`. Di halaman login ada daftar akun yang bisa diklik.
+Kedua akun memakai kata sandi `password123`. Di halaman login ada daftar akun yang bisa diklik.
 
 | Email | Peran |
 |---|---|
-| `agna@gnaascend.test` | Manager HR (hanya menyetujui cuti, tidak mengubah jadwal) |
-| `indah@gnaascend.test` | Admin HR (Assistant HR Manager, mengelola jadwal) |
-| `dimas@gnaascend.test` | Admin HR (Recruiter) |
-| `bagas@gnaascend.test` | Manager IT |
-| `indra@gnaascend.test` | Manager Marketing |
-| `salsa@gnaascend.test` | Karyawan Marketing |
-| `fajar@gnaascend.test` | Karyawan Finance |
+| `agna@gnaascend.test` | Manager HR (menyetujui cuti dan penawaran) |
+| `indah@gnaascend.test` | Admin HR (mengelola jadwal, cuti, rekrutmen, karyawan) |
 
-Email lain mengikuti pola `namadepan@gnaascend.test`.
+Karyawan lain (17 orang di data fiktif) tidak punya akun login.
 
 ### Skenario yang bisa dicoba
 
-1. Masuk sebagai **Indah**, buka Kalender, lalu tambah interview Selasa pukul 10:30 dengan Bagas. Ditolak karena Bagas sudah ada interview 10:00 sampai 11:00.
-2. Masuk sebagai **Salsa** dan ajukan cuti tahunan 15 hari kerja. Ditolak karena sisa kuota tidak cukup.
-3. Masuk sebagai **Indra** (atau **Agna**) dan setujui cuti Salsa. Setelah itu persetujuan cuti lain dari Marketing di tanggal yang sama akan ditolak.
+1. Masuk sebagai **Indah**, buka Jadwal, lalu tambah interview Selasa pukul 10:30 dengan pewawancara Bagas. Ditolak karena Bagas sudah ada interview 10:00 sampai 11:00.
+2. Buka Cuti, pilih **Salsa** dari daftar, lalu ajukan cuti tahunan 15 hari kerja. Ditolak karena sisa kuota tidak cukup.
+3. Ajukan cuti 2 hari untuk Salsa, lalu masuk sebagai **Agna** dan setujui. Setelah itu pengajuan cuti Marketing lain di tanggal yang sama akan ditolak.
+4. Rekrutmen: buka kartu Alya, isi penilaian atas nama pewawancara, pindahkan ke Penawaran, lalu masuk sebagai **Agna** untuk menyetujui penawaran.
+5. Buka Karyawan, tambah karyawan baru, lalu lihat namanya langsung muncul di semua form.
 
 ### Perintah lain
 
@@ -88,10 +87,11 @@ src/
   db.js              koneksi SQLite dan fungsi baca/tulis
   schema.sql         definisi tabel
   logic.js           aturan bisnis (bentrok, kuota cuti, hak persetujuan)
-  validate.js        validasi dan pembersihan input
+  recruit.js         aturan tahapan kandidat dan penilaian (dipakai server dan browser)
+  validate.js        validasi dan pembersihan input (jadwal, cuti, karyawan)
   seed.js            data fiktif PT Gna Ascend Indonesia
   middleware/auth.js verifikasi cookie sesi dan pengecekan peran
-  routes/            auth, events, leaves
+  routes/            auth, events, leaves, recruit, employees
 public/              frontend (index.html, app.js, styles.css)
 test/                tes unit dan tes API
 docs/screenshots/    gambar untuk README
@@ -101,20 +101,31 @@ docs/screenshots/    gambar untuk README
 
 ```mermaid
 erDiagram
-  users ||--o{ leaves : mengajukan
-  users ||--o{ event_participants : ikut
+  employees ||--o| users : "punya akun (opsional)"
+  employees ||--o{ leaves : cuti
+  employees ||--o{ event_participants : dicek_bentrok
+  employees ||--o{ events : penanggung_jawab
   events ||--o{ event_participants : punya
   rooms ||--o{ events : dipakai
-  users ||--o{ events : membuat
-  users {
+  jobs ||--o{ candidates : dilamar
+  candidates ||--o{ evaluations : dinilai
+  employees ||--o{ evaluations : pewawancara
+  users ||--o{ evaluations : menginput
+  candidates ||--o{ events : diwawancarai
+  employees {
     int id PK
     text name
-    text email UK
-    text password_hash
     text division
-    text role "hr_manager | admin | manager | staff"
+    text title
     int quota "jatah cuti tahunan"
     int used_before
+    int active "0 = nonaktif"
+  }
+  users {
+    int id PK "sama dengan employees.id"
+    text email UK
+    text password_hash
+    text role "hr_manager | admin"
   }
   rooms {
     text id PK
@@ -125,6 +136,8 @@ erDiagram
     int id PK
     text type "interview | training | company"
     text title
+    int owner_id FK "penanggung jawab"
+    int attendees "jumlah peserta"
     text event_date
     text start_time
     text end_time
@@ -133,18 +146,30 @@ erDiagram
   }
   event_participants {
     int event_id FK
-    int user_id FK
+    int employee_id FK
   }
   leaves {
     int id PK
-    int user_id FK
+    int employee_id FK
     text type "tahunan | sakit | izin"
     text start_date
     text end_date
     text status "pending | approved | rejected"
-    int decided_by FK
+    int submitted_by FK "Admin HR"
+    int decided_by FK "Manager HR"
+  }
+  evaluations {
+    int id PK
+    int candidate_id FK
+    int interviewer_id FK
+    int recorded_by FK
+    text stage
+    int score
+    text recommend
   }
 ```
+
+Data karyawan (`employees`) dipisah dari akun login (`users`): hanya Admin HR dan Manager HR yang punya akun. Untuk interview, `event_participants` berisi pewawancara; untuk training dan acara berisi penanggung jawab, sedangkan peserta cukup berupa jumlah (`attendees`) yang dipakai memeriksa kapasitas ruang.
 
 ## API
 
@@ -158,13 +183,21 @@ Semua endpoint selain login butuh cookie sesi. Respons error berbentuk `{ "error
 | GET | `/api/auth/demo` | publik | Daftar akun contoh (mati bila `DEMO_MODE=false`) |
 | GET | `/api/bootstrap` | login | Pengguna, karyawan, ruangan, jadwal, dan cuti sekaligus |
 | GET | `/api/events` | login | Daftar jadwal |
-| POST | `/api/events` | Admin HR | Membuat jadwal |
+| POST | `/api/events` | Admin HR | Membuat jadwal (interview: `people` = pewawancara; training/acara: `ownerId` + `attendees`) |
 | PUT | `/api/events/:id` | Admin HR | Mengubah jadwal |
 | DELETE | `/api/events/:id` | Admin HR | Menghapus jadwal |
+| GET | `/api/employees` | login | Daftar karyawan |
+| POST | `/api/employees` | Admin HR | Menambah karyawan |
+| PUT | `/api/employees/:id` | Admin HR | Mengubah atau menonaktifkan karyawan (yang punya akun login tidak bisa dinonaktifkan) |
+| GET | `/api/recruit` | login | Lowongan, kandidat, dan penilaian |
+| POST | `/api/recruit/jobs` | Admin HR | Menambah lowongan |
+| POST | `/api/recruit/candidates` | Admin HR | Menambah kandidat (duplikat email per lowongan ditolak) |
+| POST | `/api/recruit/candidates/:id/move` | Admin HR; Manager HR untuk Penawaran | Memindahkan tahap atau menolak (`to`, `reason`) |
+| POST | `/api/recruit/candidates/:id/evaluations` | Admin HR | Mengisi penilaian atas nama pewawancara (`interviewerId`, skor 1-5, rekomendasi) |
 | GET | `/api/leaves` | login | Daftar pengajuan cuti |
-| POST | `/api/leaves` | login | Mengajukan cuti untuk diri sendiri |
-| POST | `/api/leaves/:id/approve` | Manager HR, atau Manager divisi yang sama | Menyetujui |
-| POST | `/api/leaves/:id/reject` | Manager HR, atau Manager divisi yang sama | Menolak, dengan `note` opsional |
+| POST | `/api/leaves` | Admin HR | Mengajukan cuti atas nama karyawan (`employeeId`) |
+| POST | `/api/leaves/:id/approve` | Manager HR (Admin HR hanya untuk cuti Manager HR) | Menyetujui |
+| POST | `/api/leaves/:id/reject` | Manager HR (Admin HR hanya untuk cuti Manager HR) | Menolak, dengan `note` opsional |
 
 Kode status: `400` input tidak valid, `401` belum login, `403` tidak berwenang, `404` tidak ditemukan, `409` bentrok atau melanggar aturan (isi `conflicts` atau `errors` menjelaskan alasannya).
 
@@ -184,10 +217,11 @@ Kode status: `400` input tidak valid, `401` belum login, `403` tidak berwenang, 
 
 ## Tes
 
-`npm test` menjalankan 31 tes:
+`npm test` menjalankan 51 tes:
 
 - **Unit** (`test/logic.test.js`): tabrakan orang, ruangan, kapasitas, jadwal berurutan yang tidak dianggap bentrok, hitungan hari kerja, kuota cuti, aturan satu divisi, dan siapa yang boleh menyetujui.
-- **API** (`test/api.test.js`): server sungguhan dengan database di memori. Mencakup login, hak akses per peran, penolakan bentrok tanpa menyimpan apa pun, validasi input, dan seluruh alur persetujuan cuti.
+- **Rekrutmen** (`test/recruit.test.js`): aturan tahapan dan penilaian, penilaian atas nama pewawancara terdaftar, penolakan duplikat dan lowongan tutup, serta alur lengkap dari penilaian sampai persetujuan Manager HR.
+- **API** (`test/api.test.js`): server sungguhan dengan database di memori. Mencakup login, hak akses per peran, penolakan bentrok tanpa menyimpan apa pun, validasi input, kapasitas ruang dari jumlah peserta, alur persetujuan cuti, dan pengelolaan karyawan.
 
 ## Deploy
 
@@ -201,9 +235,10 @@ Demo online berjalan di Vercel (lihat `vercel.json` dan `api/index.js`; database
 ## Keterbatasan dan rencana pengembangan
 
 - Token sesi tidak bisa dicabut dari server sebelum kedaluwarsa (8 jam). Logout hanya menghapus cookie di browser.
-- Semua pengguna yang login bisa melihat semua jadwal, termasuk nama kandidat interview. Di aplikasi sungguhan, interview sebaiknya hanya terlihat oleh panitia.
+- Belum ada upload CV, email otomatis ke kandidat, atau riwayat perubahan tahap (audit log).
 - `node:sqlite` masih berstatus eksperimental di Node.js 22 dan 24. Skrip npm sudah menyembunyikan peringatannya, tetapi API-nya bisa berubah di versi mendatang.
-- Belum ada ganti password, reset password, atau pengelolaan karyawan lewat antarmuka.
+- Belum ada ganti password atau reset password. Akun login hanya dua dan dibuat lewat data awal.
+- Struktur database berversi (`PRAGMA user_version`). Bila versinya naik, tabel lama dihapus dan dibuat ulang dari data fiktif. Itu aman untuk demo, tetapi aplikasi sungguhan memerlukan migrasi.
 - Belum ada pengingat email H-1 dan jadwal berulang.
 - Semua data dimuat sekaligus. Untuk data besar perlu filter tanggal dan paginasi di API.
 - Pindah ke PostgreSQL bila perlu lebih dari satu proses server. Query saat ini tersebar di `src/db.js`, `src/routes/`, dan `src/middleware/auth.js`, jadi sebaiknya dirapikan dulu menjadi satu lapisan akses data.

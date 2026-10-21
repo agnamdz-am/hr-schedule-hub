@@ -29,7 +29,7 @@ function clearSessionCookie(res) {
 
 /** Memuat pengguna dari token. Pengguna diambil ulang dari database agar perubahan peran langsung berlaku. */
 function requireAuth(db) {
-  const find = db.prepare('SELECT id, name, email, division AS div, title, role, quota, used_before AS usedBefore FROM users WHERE id = ?');
+  const find = db.prepare('SELECT u.id, e.name, u.email, e.division AS div, e.title, u.role, e.quota, e.used_before AS usedBefore FROM users u JOIN employees e ON e.id = u.id WHERE u.id = ?');
   return (req, res, next) => {
     const token = req.cookies && req.cookies[COOKIE];
     if (!token) return res.status(401).json({ error: 'Silakan login terlebih dahulu.' });

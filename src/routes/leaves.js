@@ -1,4 +1,5 @@
 const express = require('express');
+const { requireRole } = require('../middleware/auth');
 const { loadCtx, getLeaves } = require('../db');
 const { checkLeave, checkApproval, canApprove } = require('../logic');
 const { parseLeaveInput } = require('../validate');
@@ -17,16 +18,18 @@ function leaveRoutes(db) {
 
   router.get('/', (req, res) => res.json({ leaves: getLeaves(db) }));
 
-  router.post('/', (req, res) => {
+  // Hanya Admin HR yang mengajukan cuti, atas nama karyawan yang dipilih dari data karyawan.
+  router.post('/', requireRole('admin'), (req, res) => {
     const parsed = parseLeaveInput(req.body);
     if (parsed.errors) return res.status(400).json({ error: parsed.errors[0], errors: parsed.errors });
     const ctx = { ...loadCtx(db), today: today() };
-    const draft = { userId: req.user.id, ...parsed.value };
+    const draft = parsed.value;
+    if (!ctx.people.some((p) => p.id === draft.employeeId)) return res.status(400).json({ error: 'Karyawan tidak ditemukan.' });
     const result = checkLeave(draft, ctx);
     if (result.errors.length) return res.status(409).json({ error: result.errors[0], errors: result.errors, warnings: result.warnings });
     const info = db
-      .prepare("INSERT INTO leaves (user_id,type,start_date,end_date,reason,status) VALUES (?,?,?,?,?,'pending')")
-      .run(req.user.id, draft.type, draft.start, draft.end, draft.reason);
+      .prepare("INSERT INTO leaves (employee_id,type,start_date,end_date,reason,status,submitted_by) VALUES (?,?,?,?,?,'pending',?)")
+      .run(draft.employeeId, draft.type, draft.start, draft.end, draft.reason, req.user.id);
     const leave = getLeaves(db).find((l) => l.id === Number(info.lastInsertRowid));
     res.status(201).json({ leave, warnings: result.warnings });
   });
